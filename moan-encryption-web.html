@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>moan-encryption</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+        }
+
+        body {
+            background-image: url('pink-miku.png');
+            /* 请替换为本地二次元风格图片路径 */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #ffe6f2;
+            padding: 20px;
+            color: #660033;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+            border: 2px solid #ff99cc;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff66b2;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-size: 1.2rem;
+            color: #cc3366;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 3px solid #ffb3d9;
+            border-radius: 15px;
+            font-size: 1rem;
+            resize: vertical;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #660033;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #ff66b2;
+            box-shadow: 0 0 10px rgba(255, 102, 178, 0.5);
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 30px;
+            background-color: #ff66b2;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 #cc3366;
+        }
+
+        button:hover {
+            background-color: #ff3399;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 #b30066;
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #b30066;
+        }
+
+        .container::before {
+            top: 10px;
+            left: 20px;
+        }
+
+        .container::after {
+            bottom: 10px;
+            right: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            button {
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>moan-encryption</h1>
+
+        <div class="section">
+            <label for="inputCode">转换前：</label>
+            <textarea id="inputCode"></textarea>
+
+            <label for="outputCode">转换后：</label>
+            <textarea id="outputCode"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button onclick="encode()">加密</button>
+            <button onclick="decode()">解密</button>
+        </div>
+    </div>
+
+    <script>
+        const codebook = ['嗯', '啊', '哼', '唔', '哈', '嘤', '咿', '喔', '噢', '呼', '呃', '疼', '…', '！', '~', '❤'];
+        // const codebook = ['齁', '哦', '噢', '喔', '咕', '咿', '嗯', '啊', '～', '哈', '！', '唔', '哼', '❤', '呃', '呼'];
+
+        const codebookMap = {};
+        for (let i = 0; i < codebook.length; i++) {
+            codebookMap[codebook[i]] = i;
+        }
+
+        function encode() {
+            let input = document.getElementById("inputCode").value;
+            let encoder = new TextEncoder();
+            let bytes = encoder.encode(input);
+            let encoded = '';
+            for (let byte of bytes) {
+                let high = (byte >> 4) & 0x0F;
+                let low = byte & 0x0F;
+                encoded += codebook[high] + codebook[low];
+            }
+            document.getElementById("outputCode").value = encoded;
+        }
+
+        function decode() {
+            let input = document.getElementById("inputCode").value;
+            if (input.length % 2 != 0) {
+                alert("待解密字符串长度必须是偶数");
+                return;
+            }
+
+            let bytes = [];
+            for (let i = 0; i < input.length; i += 2) {
+                let high = codebookMap[input[i]];
+                let low = codebookMap[input[i + 1]];
+                if (high == undefined || low == undefined) {
+                    alert("待解密字符串包含非法字符");
+                    return;
+                }
+                let byte = (high << 4) + low;
+                bytes.push(byte);
+            }
+            let decoder = new TextDecoder();
+            try {
+                let decoded = decoder.decode(new Uint8Array(bytes));
+                document.getElementById("outputCode").value = decoded;
+            } catch (e) {
+                alert("无法正确解码为UTF-8文本");
+                document.getElementById("outputCode").value = '';
+            }
+        }
+    </script>
+</body>
+
+</html>
